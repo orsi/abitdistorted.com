@@ -4,7 +4,9 @@ html {
 
 body {
   background: black;
-  color: lime;
-  font: 16px monospace;
+  color: white;
+  font: 16px system-ui;
   height: 100%;
+  margin: 0 auto;
+  max-width: 600px;
 }
