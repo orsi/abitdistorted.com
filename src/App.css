@@ -1,0 +1,17 @@
+main {
+    align-items: center;
+    display: flex;
+    height: 100%;
+    justify-content: center;
+}
+
+.blink {
+    animation: blink 1.15s step-end infinite;
+    display: inline-block;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}
