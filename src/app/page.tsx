@@ -1,6 +1,4 @@
-import './App.css';
-
-function App() {
+export default function Home() {
     return (
         <main>
             <h1>a bit distorted</h1>
@@ -21,5 +19,3 @@ function App() {
         </main>
     );
 }
-
-export default App;
