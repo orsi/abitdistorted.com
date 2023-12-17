@@ -6,6 +6,7 @@ body {
   background: black;
   color: white;
   font: 16px system-ui;
+  font-weight: 200;
   height: 100%;
   margin: 0 auto;
   max-width: 600px;
