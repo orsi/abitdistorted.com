@@ -56,7 +56,7 @@ export default function MainNavigation() {
         return () => {
             window.removeEventListener('keydown', onKeyDown);
         };
-    }, [selectedLink]);
+    }, [router, selectedLink]);
 
     return (
         <nav
@@ -119,7 +119,7 @@ export default function MainNavigation() {
                         }}
                         ref={(el) => el && linkRefs.current.push(el)}
                     >
-                        Jon's Tuner
+                        Jon&apos;s Tuner
                     </Link>
                 </li>
             </ul>
