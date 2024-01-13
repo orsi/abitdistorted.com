@@ -6,44 +6,20 @@ import {
     useState,
     useLayoutEffect,
     useEffect,
+    createContext,
+    PropsWithChildren,
+    useContext,
 } from 'react';
 import { useFrame } from '../hooks/useFrame';
 
 const FRAME_MS = 1000 / 20;
-const vertexShaderSource = `
-    precision mediump float;
-    attribute vec2 vertPosition;
-    varying vec2 vertFragPosition;
-
-    void main() {
-        vertFragPosition = vertPosition;
-        gl_Position = vec4(vertPosition, 0.0, 1.0);
-    }
-`;
-const fragmentShaderSource = `
-    precision mediump float;
-    varying vec2 vertFragPosition;
-    uniform float u_time;
-
-    // https://thebookofshaders.com/10/
-    float rand(vec2 co){
-        return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453);
-    }
-
-    void main() {
-        gl_FragColor.r = rand(vertFragPosition * u_time * 1.0);
-        gl_FragColor.g = rand(vertFragPosition * u_time * 2.0);
-        gl_FragColor.b = rand(vertFragPosition * u_time * 3.0);
-        gl_FragColor.a = rand(vertFragPosition * u_time) * 0.25;
-    }
-`;
-
 export default function BackgroundCanvas({ style }: { style?: CSSProperties }) {
+    const { vertexShader, fragmentShader } = useBackgroundContext();
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [program, setProgram] = useState<WebGLProgram>();
     const [currentHeight, setCurrentHeight] = useState<number>();
     const [currentWidth, setCurrentWidth] = useState<number>();
 
+    const [program, setProgram] = useState<WebGLProgram>();
     function update(gl: WebGL2RenderingContext, width: number, height: number) {
         if (program == null) {
             return;
@@ -82,7 +58,6 @@ export default function BackgroundCanvas({ style }: { style?: CSSProperties }) {
 
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -127,34 +102,36 @@ export default function BackgroundCanvas({ style }: { style?: CSSProperties }) {
     }, []);
 
     useEffect(() => {
+        if (!fragmentShader || !vertexShader) {
+            return;
+        }
+
         const gl = canvasRef.current?.getContext('webgl2');
         if (gl == null) {
             return;
         }
 
         // vertex shader
-
-        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-        if (vertexShader == null) {
+        const glVertexShader = gl.createShader(gl.VERTEX_SHADER);
+        if (glVertexShader == null) {
             return;
         }
-        gl.shaderSource(vertexShader, vertexShaderSource);
-        gl.compileShader(vertexShader);
-        if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-            const info = gl.getShaderInfoLog(vertexShader);
+        gl.shaderSource(glVertexShader, vertexShader);
+        gl.compileShader(glVertexShader);
+        if (!gl.getShaderParameter(glVertexShader, gl.COMPILE_STATUS)) {
+            const info = gl.getShaderInfoLog(glVertexShader);
             throw `Could not compile WebGL vertex shader. \n\n${info}`;
         }
 
         // fragment shader
-
-        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-        if (fragmentShader == null) {
+        const glFragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        if (glFragmentShader == null) {
             return;
         }
-        gl.shaderSource(fragmentShader, fragmentShaderSource);
-        gl.compileShader(fragmentShader);
-        if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-            const info = gl.getShaderInfoLog(fragmentShader);
+        gl.shaderSource(glFragmentShader, fragmentShader);
+        gl.compileShader(glFragmentShader);
+        if (!gl.getShaderParameter(glFragmentShader, gl.COMPILE_STATUS)) {
+            const info = gl.getShaderInfoLog(glFragmentShader);
             throw `Could not compile WebGL fragment shader. \n\n${info}`;
         }
 
@@ -163,25 +140,20 @@ export default function BackgroundCanvas({ style }: { style?: CSSProperties }) {
         if (program == null) {
             return;
         }
-        gl.attachShader(program, vertexShader);
-        gl.attachShader(program, fragmentShader);
+        gl.attachShader(program, glVertexShader);
+        gl.attachShader(program, glFragmentShader);
         gl.linkProgram(program);
         if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
             const info = gl.getProgramInfoLog(program);
             throw `Could not compile WebGL program. \n\n${info}`;
         }
-        // gl.validateProgram(program);
-        // if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
-        //     const info = gl.getProgramInfoLog(program);
-        //     throw `Could not validate WebGL program. \n\n${info}`;
-        // }
         gl.useProgram(program);
         setProgram(program);
 
         return () => {
             gl.deleteProgram(program);
         };
-    }, []);
+    }, [fragmentShader, vertexShader]);
 
     return (
         <canvas
@@ -195,4 +167,44 @@ export default function BackgroundCanvas({ style }: { style?: CSSProperties }) {
             width={currentWidth}
         ></canvas>
     );
+}
+
+const BackgroundContext = createContext({
+    setShaders: (
+        vertexShaderSource: string,
+        fragmentShaderSource: string
+    ) => {},
+    vertexShader: ``,
+    fragmentShader: ``,
+});
+interface BackgroundContextProviderProps extends PropsWithChildren {}
+export function BackgroundContextProvider({
+    children,
+}: BackgroundContextProviderProps) {
+    const [vertexShader, setVertexShader] = useState(``);
+    const [fragmentShader, setFragmentShader] = useState(``);
+
+    function setShaders(
+        vertexShaderSource: string,
+        fragmentShaderSource: string
+    ) {
+        setVertexShader(vertexShaderSource);
+        setFragmentShader(fragmentShaderSource);
+    }
+
+    return (
+        <BackgroundContext.Provider
+            value={{
+                setShaders,
+                vertexShader,
+                fragmentShader,
+            }}
+        >
+            {children}
+        </BackgroundContext.Provider>
+    );
+}
+
+export function useBackgroundContext() {
+    return useContext(BackgroundContext);
 }
