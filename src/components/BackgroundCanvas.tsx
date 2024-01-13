@@ -9,14 +9,8 @@ import {
 } from 'react';
 import { useFrame } from '../hooks/useFrame';
 
-const FRAME_MS = 1000 / 20; 
-
-export default function BackgroundCanvas({ style }: { style?: CSSProperties }) {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [program, setProgram] = useState<WebGLProgram>();
-    const [currentHeight, setCurrentHeight] = useState<number>();
-    const [currentWidth, setCurrentWidth] = useState<number>();
-    const vertexShaderSource = `
+const FRAME_MS = 1000 / 20;
+const vertexShaderSource = `
     precision mediump float;
     attribute vec2 vertPosition;
     varying vec2 vertFragPosition;
@@ -25,9 +19,8 @@ export default function BackgroundCanvas({ style }: { style?: CSSProperties }) {
         vertFragPosition = vertPosition;
         gl_Position = vec4(vertPosition, 0.0, 1.0);
     }
-    `;
-
-    const fragmentShaderSource = `
+`;
+const fragmentShaderSource = `
     precision mediump float;
     varying vec2 vertFragPosition;
     uniform float u_time;
@@ -41,9 +34,15 @@ export default function BackgroundCanvas({ style }: { style?: CSSProperties }) {
         gl_FragColor.r = rand(vertFragPosition * u_time * 1.0);
         gl_FragColor.g = rand(vertFragPosition * u_time * 2.0);
         gl_FragColor.b = rand(vertFragPosition * u_time * 3.0);
-        gl_FragColor.a = rand(vertFragPosition * u_time) * 0.325;
+        gl_FragColor.a = rand(vertFragPosition * u_time) * 0.25;
     }
-    `;
+`;
+
+export default function BackgroundCanvas({ style }: { style?: CSSProperties }) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [program, setProgram] = useState<WebGLProgram>();
+    const [currentHeight, setCurrentHeight] = useState<number>();
+    const [currentWidth, setCurrentWidth] = useState<number>();
 
     function update(gl: WebGL2RenderingContext, width: number, height: number) {
         if (program == null) {
