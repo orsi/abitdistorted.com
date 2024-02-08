@@ -11,7 +11,7 @@ const canvases: Record<string, HTMLCanvasElement> = {};
 
 export function createCanvas(
   id: string,
-  { vertexShader, fragmentShader }: WebGL2Options
+  { vertexShader: vertex, fragmentShader: fragment }: WebGL2Options
 ) {
   if (canvases[id]) {
     console.warn(`A canvas with id ${id} already exists!`);
@@ -23,14 +23,11 @@ export function createCanvas(
   const program = gl.createProgram()!;
 
   // setup shaders
-  if (vertexShader) {
-    setupShader(gl, 'vertex', program, vertexShader);
-  }
+  const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertex);
+  const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragment);
 
-  if (fragmentShader) {
-    setupShader(gl, 'fragment', program, fragmentShader);
-  }
-
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
   gl.linkProgram(program);
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
     console.error(gl.getProgramInfoLog(program));
@@ -44,15 +41,14 @@ export function createCanvas(
   };
 }
 
-export function setupShader(
+export function createShader(
   gl: WebGL2RenderingContext,
-  type: 'vertex' | 'fragment',
-  program: WebGLProgram,
+  type:
+    | WebGLRenderingContextBase['VERTEX_SHADER']
+    | WebGLRenderingContextBase['FRAGMENT_SHADER'],
   source: string
 ) {
-  const glShader = gl.createShader(
-    type === 'vertex' ? gl.VERTEX_SHADER : gl.FRAGMENT_SHADER
-  )!;
+  const glShader = gl.createShader(type)!;
   gl.shaderSource(glShader, source);
   gl.compileShader(glShader);
 
@@ -60,7 +56,7 @@ export function setupShader(
     console.error(gl.getShaderInfoLog(glShader));
   }
 
-  gl.attachShader(program, glShader);
+  return glShader;
 }
 
 interface ClearOptions {
