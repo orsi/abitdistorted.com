@@ -91,7 +91,7 @@ export default function Experiment4() {
 
     out vec4 fragColor;
     void main() {
-        float alpha = 0.3;
+        float alpha = 0.2;
         fragColor = vec4(vColor * alpha, alpha);
     }`
     );
@@ -128,7 +128,7 @@ export default function Experiment4() {
     // SET UP GEOMETRY
     //////////////////////////
 
-    var NUM_PARTICLES = 200000;
+    var NUM_PARTICLES = 10000;
     var positionData = new Float32Array(NUM_PARTICLES * 3);
     var velocityData = new Float32Array(NUM_PARTICLES * 3);
     var colorData = new Float32Array(NUM_PARTICLES * 3);
@@ -140,9 +140,9 @@ export default function Experiment4() {
       positionData[vec3i + 1] = Math.random() * 2 - 1;
       positionData[vec3i + 2] = Math.random() * 2 - 1;
 
-      colorData[vec3i] = Math.random();
-      colorData[vec3i + 1] = Math.random();
-      colorData[vec3i + 2] = Math.random();
+      colorData[vec3i] = 1;
+      colorData[vec3i + 1] = 1;
+      colorData[vec3i + 2] = 1;
     }
 
     //////////////////////////////////////
@@ -302,7 +302,7 @@ export default function Experiment4() {
     }
 
     requestAnimationFrame(draw);
-  }, []);
+  });
 
   return <canvas ref={ref} />;
 }
