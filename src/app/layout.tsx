@@ -30,8 +30,8 @@ export default function RootLayout({
                 padding: '16px',
                 position: 'relative',
                 margin: '0 auto',
-                maxHeight: '480px',
-                maxWidth: '640px',
+                maxHeight: '960px',
+                maxWidth: '1280px',
                 width: '100%',
                 zIndex: '2',
               }}
@@ -41,7 +41,6 @@ export default function RootLayout({
                   border: '1px dashed rgba(255,255,255,.4)',
                   height: '100%',
                   padding: '16px',
-                  margin: '0 16px',
                   minWidth: '0px',
                 }}
               >
