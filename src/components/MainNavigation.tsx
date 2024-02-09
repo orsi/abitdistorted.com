@@ -9,6 +9,8 @@ export const ROUTES = [
   { path: '/', displayName: '/home' },
   { path: '/about' },
   { path: '/jons-tuner' },
+  { path: '/code-x' },
+  { path: '/a-dark-room' },
   { path: '/in-development' },
 ];
 
