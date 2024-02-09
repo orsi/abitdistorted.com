@@ -30,6 +30,25 @@ body {
   font-weight: 500;
 }
 
+h1 {
+  font-size: 1.25rem;
+}
+
 small {
   font-size: .625rem;
+}
+
+a {
+  color: snow;
+}
+
+a:hover,
+a:focus {
+  text-decoration: underline;
+}
+
+@media (prefers-reduced-motion) {
+  canvas {
+    display: none;
+  }
 }

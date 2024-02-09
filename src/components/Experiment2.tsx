@@ -25,7 +25,7 @@ const fragmentShaderSource = `
         gl_FragColor.r = rand(vertFragPosition * u_time * 1.0);
         gl_FragColor.g = rand(vertFragPosition * u_time * 2.0);
         gl_FragColor.b = rand(vertFragPosition * u_time * 3.0);
-        gl_FragColor.a = rand(vertFragPosition * u_time) * 0.9;
+        gl_FragColor.a = rand(vertFragPosition * u_time) * 0.3;
     }
 `;
 
