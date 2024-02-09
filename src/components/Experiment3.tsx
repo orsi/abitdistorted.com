@@ -23,7 +23,7 @@ const fragmentShaderSource = `#version 300 es
       fragColor.r = rand(gl_FragCoord.xy * u_time * 1.0);
       fragColor.g = rand(gl_FragCoord.xy * u_time * 2.0);
       fragColor.b = rand(gl_FragCoord.xy * u_time * 3.0);
-      fragColor.a = rand(gl_FragCoord.xy * u_time) * 0.25;
+      fragColor.a = rand(gl_FragCoord.xy * u_time) * 0.4;
     }
 `;
 export default function Experiment3() {
