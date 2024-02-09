@@ -3,49 +3,53 @@
 import styles from './MainNavigation.module.css';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-export type Routes = '/' | '/about' | '/jons-tuner';
+export const ROUTES = [
+    { path: '/', displayName: '/home' },
+    { path: '/jons-tuner' },
+    { path: '/code-x' },
+    { path: '/a-dark-room' },
+];
+
+if (process.env.NODE_ENV === 'development') {
+    ROUTES.push({ path: '/in-development' });
+}
+
+export type TRouteName = (typeof ROUTES)[number]['path'];
 
 export default function MainNavigation() {
     const pathname = usePathname();
     const router = useRouter();
-    const [selectedLink, setSelectedLink] = useState<Routes>('/');
-    const linkRefs = useRef<HTMLAnchorElement[]>([]);
+    const [currentSelection, setCurrentSelection] = useState<number>(0);
 
     useEffect(() => {
-        function gotoSelectedLink(current: Routes) {
-            router.push(current);
-        }
-
-        function setNextSelectedLink(current: Routes) {
-            if (selectedLink === '/') {
-                setSelectedLink('/about');
-            } else if (selectedLink === '/about') {
-                setSelectedLink('/jons-tuner');
-            }
-        }
-
-        function setPreviousSelectedLink(current: Routes) {
-            if (selectedLink === '/about') {
-                setSelectedLink('/');
-            } else if (selectedLink === '/jons-tuner') {
-                setSelectedLink('/about');
-            }
-        }
-
         function onKeyDown(ev: KeyboardEvent) {
             switch (ev.key) {
                 case 'ArrowDown': {
-                    setNextSelectedLink(selectedLink);
+                    const nextSelection = currentSelection + 1;
+                    if (nextSelection > ROUTES.length - 1) {
+                        break;
+                    }
+
+                    setCurrentSelection(nextSelection);
                     break;
                 }
                 case 'ArrowUp': {
-                    setPreviousSelectedLink(selectedLink);
+                    const nextSelection = currentSelection - 1;
+                    if (nextSelection < 0) {
+                        break;
+                    }
+
+                    setCurrentSelection(nextSelection);
                     break;
                 }
                 case 'Enter': {
-                    gotoSelectedLink(selectedLink);
+                    const currentSelectedRoute = ROUTES[currentSelection];
+                    if (!currentSelectedRoute) {
+                        break;
+                    }
+                    router.push(currentSelectedRoute.path);
                     break;
                 }
             }
@@ -56,7 +60,7 @@ export default function MainNavigation() {
         return () => {
             window.removeEventListener('keydown', onKeyDown);
         };
-    }, [router, selectedLink]);
+    }, [currentSelection, router]);
 
     return (
         <nav
@@ -67,61 +71,31 @@ export default function MainNavigation() {
             }}
         >
             <ul>
-                <li>
-                    <Link
-                        className={`${styles.link} ${
-                            pathname === '/' ? 'active' : ''
-                        } ${selectedLink === '/' ? styles.selected : ''}`}
-                        href={'/'}
-                        onClick={() => {
-                            setSelectedLink('/');
-                        }}
-                        onMouseEnter={() => {
-                            setSelectedLink('/');
-                        }}
-                        ref={(el) => el && linkRefs.current.push(el)}
-                    >
-                        Home
-                    </Link>
-                </li>
-                <li>
-                    <Link
-                        className={`${styles.link} ${
-                            pathname === '/about' ? 'active' : ''
-                        } ${selectedLink === '/about' ? styles.selected : ''}`}
-                        href={'/about'}
-                        onClick={() => {
-                            setSelectedLink('/about');
-                        }}
-                        onMouseEnter={() => {
-                            setSelectedLink('/about');
-                        }}
-                        ref={(el) => el && linkRefs.current.push(el)}
-                    >
-                        About
-                    </Link>
-                </li>
-                <li>
-                    <Link
-                        className={`${styles.link} ${
-                            pathname === '/jons-tuner' ? 'active' : ''
-                        } ${
-                            selectedLink === '/jons-tuner'
-                                ? styles.selected
-                                : ''
-                        }`}
-                        href={'/jons-tuner'}
-                        onClick={() => {
-                            setSelectedLink('/jons-tuner');
-                        }}
-                        onMouseEnter={() => {
-                            setSelectedLink('/jons-tuner');
-                        }}
-                        ref={(el) => el && linkRefs.current.push(el)}
-                    >
-                        Jon&apos;s Tuner
-                    </Link>
-                </li>
+                {ROUTES.map((route, i) => {
+                    return (
+                        <li key={route.path}>
+                            <Link
+                                className={`${styles.link} ${
+                                    pathname === route.path ? 'active' : ''
+                                } ${
+                                    ROUTES[currentSelection]?.path ===
+                                    route.path
+                                        ? styles.selected
+                                        : ''
+                                }`}
+                                href={route.path}
+                                onClick={() => {
+                                    setCurrentSelection(i);
+                                }}
+                                onMouseEnter={() => {
+                                    setCurrentSelection(i);
+                                }}
+                            >
+                                {route.displayName || route.path}
+                            </Link>
+                        </li>
+                    );
+                })}
             </ul>
         </nav>
     );
