@@ -5,11 +5,17 @@ import { useBackgroundContext } from '../../components/BackgroundCanvas';
 import Experiment5 from '../../components/Experiment5';
 
 export default function InDevelopment() {
-  const { setBackground } = useBackgroundContext();
+    const { setBackground, reset } = useBackgroundContext();
 
-  useEffect(() => {
-    setBackground(<Experiment5 />);
-  }, [setBackground]);
+    useEffect(() => {
+        setBackground(<Experiment5 />);
+    }, [setBackground]);
 
-  return <></>;
+    useEffect(() => {
+        return () => {
+            reset();
+        };
+    }, []);
+
+    return <></>;
 }

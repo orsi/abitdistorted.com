@@ -13,6 +13,7 @@ import Experiment1 from './Experiment1';
 
 const BackgroundContext = createContext({
     setBackground: (node: ReactNode) => {},
+    reset: () => {},
 });
 interface BackgroundContextProviderProps extends PropsWithChildren {}
 export function BackgroundContextProvider({
@@ -25,29 +26,32 @@ export function BackgroundContextProvider({
         setCurrentBackgroundElement(node);
     }, []);
 
+    const reset = useCallback(() => {
+        setCurrentBackgroundElement(<Experiment1 />);
+    }, []);
+
     const context = useMemo(
         () => ({
             setBackground,
+            reset,
         }),
-        [setBackground]
+        [setBackground, reset]
     );
 
     return (
         <BackgroundContext.Provider value={context}>
-            {currentBackgroundElement != null ? (
-                <div
-                    style={{
-                        position: 'absolute',
-                        top: '0',
-                        left: '0',
-                        height: '100%',
-                        width: '100%',
-                        zIndex: 1,
-                    }}
-                >
-                    {currentBackgroundElement}
-                </div>
-            ) : null}
+            <div
+                style={{
+                    position: 'absolute',
+                    top: '0',
+                    left: '0',
+                    height: '100%',
+                    width: '100%',
+                    zIndex: 1,
+                }}
+            >
+                {currentBackgroundElement}
+            </div>
             {children}
         </BackgroundContext.Provider>
     );
