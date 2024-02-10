@@ -169,25 +169,15 @@ export default function Experiment1() {
             const isPrefersReducedMotionEnabled =
                 prefersReducedMotionRef.current === true;
             const isGlitchPause =
-                Math.floor((Date.now() - startTimeRef.current) / 1000 + 1) %
-                    5 ===
-                0;
+                Math.floor((now - startTimeRef.current) / 1000 + 1) % 5 === 0;
             if (
                 hasFramesElapsed &&
                 !isPrefersReducedMotionEnabled &&
                 !isGlitchPause
             ) {
-                const timeUniformLocation = gl.getUniformLocation(
-                    program!,
-                    'u_time'
-                );
                 gl.uniform1f(
                     timeUniformLocation,
-                    (Date.now() - startTimeRef.current) / 1000
-                );
-                const mouseUniformLocation = gl.getUniformLocation(
-                    program!,
-                    'u_mousePosition'
+                    (now - startTimeRef.current) / 1000
                 );
                 gl.uniform2fv(mouseUniformLocation, [
                     mouseRef.current?.x ?? 0.0,
