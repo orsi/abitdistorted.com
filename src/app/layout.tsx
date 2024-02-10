@@ -24,7 +24,7 @@ export default function RootLayout({
               height: '100%',
             }}
           >
-            <main
+            <div
               style={{
                 height: '100%',
                 padding: '32px',
@@ -59,16 +59,16 @@ export default function RootLayout({
                   >
                     <MainNavigation />
                   </div>
-                  <div
+                  <main
                     style={{
                       marginTop: 'auto',
                     }}
                   >
                     {children}
-                  </div>
+                  </main>
                 </div>
               </div>
-            </main>
+            </div>
           </div>
         </BackgroundContextProvider>
       </body>
