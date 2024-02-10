@@ -10,6 +10,7 @@ export default function Experiment1() {
         }`;
     const fragmentShaderSource = `
         precision mediump float;
+        uniform vec2 u_resolution;
         uniform vec2 u_mousePosition;
         uniform float u_time;
 
@@ -22,23 +23,27 @@ export default function Experiment1() {
         }
 
         void main() {
-            float modifier = 0.2;
-            float randXLeft = rand(u_mousePosition * u_time) * 10.0;
-            float randXRight = rand(u_mousePosition * u_time) * 2.0;
-            float randYTop = rand(u_mousePosition * u_time) * 8.0;
-            float randYBottom = rand(u_mousePosition * u_time) * 4.0;
-            bool isInDistance = (u_mousePosition.x - X_RANGE + randXLeft < gl_FragCoord.x
-                && u_mousePosition.x + X_RANGE + randXRight > gl_FragCoord.x)
-            || (u_mousePosition.y - Y_RANGE + randYTop < gl_FragCoord.y
-                && u_mousePosition.y + Y_RANGE + randYBottom > gl_FragCoord.y);
-            if (isInDistance) {
-                modifier += rand(vec2(u_time, u_time)) * .1;
+            float aspect = u_resolution.x / u_resolution.y;
+            vec2 normalizedMousePosition = u_mousePosition / u_resolution;
+            vec2 normalizedFragCoord = gl_FragCoord.xy / u_resolution;
+            float distanceFromMouse = sqrt(
+                pow(normalizedFragCoord.x * aspect * rand(vec2(normalizedFragCoord.x, u_time)) - normalizedMousePosition.x * aspect * rand(vec2(normalizedMousePosition.x, u_time)), 2.0) 
+                + pow(normalizedFragCoord.y - normalizedMousePosition.y, 2.0)
+            );
+            float modifier = 0.09;
+            if (distanceFromMouse + rand(vec2(u_time, u_time)) * .005  < rand(vec2(distanceFromMouse, u_time)) * .02 + rand(vec2(distanceFromMouse, u_time)) * .07) {
+                modifier += rand(vec2(distanceFromMouse, u_time)) * .9;
             }
 
-            gl_FragColor.r = rand(gl_FragCoord.xy * u_time * 1.0 * modifier);
-            gl_FragColor.g = rand(gl_FragCoord.xy * u_time * 2.0 * modifier);
-            gl_FragColor.b = rand(gl_FragCoord.xy * u_time * 3.0 * modifier);
-            gl_FragColor.a = rand(gl_FragCoord.xy * u_time) * modifier;
+            if (fract(u_time) * rand(vec2(u_time))  < .01) {
+                float i = rand(normalizedFragCoord + u_time);
+                gl_FragColor = vec4(i, i, i, i * 0.15);
+            } else {
+                gl_FragColor.r = rand(normalizedFragCoord + 0.1 + u_time);
+                gl_FragColor.g = rand(normalizedFragCoord + 0.2 + u_time);
+                gl_FragColor.b = rand(normalizedFragCoord + 0.3 + u_time);
+                gl_FragColor.a = rand(normalizedFragCoord + u_time) * modifier + 0.07;
+            }
         }`;
 
     const startTimeRef = useRef(Date.now());
@@ -141,6 +146,15 @@ export default function Experiment1() {
         );
         gl.enableVertexAttribArray(vertPositionAttributeLocation);
 
+        const resolutionUniformLocation = gl.getUniformLocation(
+            program,
+            'u_resolution'
+        );
+        gl.uniform2fv(resolutionUniformLocation, [
+            gl.canvas.width,
+            gl.canvas.height,
+        ]);
+
         const timeUniformLocation = gl.getUniformLocation(program, 'u_time');
         gl.uniform1f(
             timeUniformLocation,
@@ -164,7 +178,7 @@ export default function Experiment1() {
         const update = (gl: WebGL2RenderingContext) => {
             const now = Date.now();
             const delta = now - lastUpdateRef.current;
-            const hasFramesElapsed = delta > 1000 / 30;
+            const hasFramesElapsed = delta > 1000 / 24;
             const isPrefersReducedMotionEnabled =
                 prefersReducedMotionRef.current === true;
             const isGlitchPause =
