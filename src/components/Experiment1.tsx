@@ -127,7 +127,6 @@ export default function Experiment1() {
             new Float32Array(triangleVertices),
             gl.STATIC_DRAW
         );
-
         const vertPositionAttributeLocation = gl.getAttribLocation(
             program,
             'vertPosition'
@@ -137,7 +136,7 @@ export default function Experiment1() {
             2,
             gl.FLOAT,
             false,
-            2 * Float32Array.BYTES_PER_ELEMENT,
+            0,
             0
         );
         gl.enableVertexAttribArray(vertPositionAttributeLocation);
