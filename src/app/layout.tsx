@@ -27,7 +27,7 @@ export default function RootLayout({
             <main
               style={{
                 height: '100%',
-                padding: '16px',
+                padding: '32px',
                 position: 'relative',
                 margin: '0 auto',
                 maxHeight: '960px',
