@@ -1,15 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useBackgroundContext } from '../../components/BackgroundCanvas';
-import Experiment3 from '../../components/Experiment3';
-
 export default function CodeX() {
-    const { setBackground } = useBackgroundContext();
-    useEffect(() => {
-        setBackground(<Experiment3 />);
-    }, [setBackground]);
-
     return (
         <section>
             <h1 className="hidden">Code X</h1>

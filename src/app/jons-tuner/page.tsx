@@ -1,15 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useBackgroundContext } from '../../components/BackgroundCanvas';
-import Experiment2 from '../../components/Experiment2';
-
 export default function JonsTuner() {
-    const { setBackground } = useBackgroundContext();
-    useEffect(() => {
-        setBackground(<Experiment2 />);
-    }, [setBackground]);
-
     return (
         <section>
             <h1 className="hidden">Jon&apos;s Tuner</h1>

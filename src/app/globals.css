@@ -46,9 +46,3 @@ a:hover,
 a:focus {
   text-decoration: underline;
 }
-
-@media (prefers-reduced-motion) {
-  canvas {
-    display: none;
-  }
-}
