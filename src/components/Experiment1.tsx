@@ -14,8 +14,6 @@ export default function Experiment1() {
         uniform vec2 u_mousePosition;
         uniform float u_time;
 
-        #define X_RANGE 20.0
-        #define Y_RANGE 25.0
 
         // https://thebookofshaders.com/10/
         float rand(vec2 co){
@@ -31,8 +29,8 @@ export default function Experiment1() {
                 + pow(normalizedFragCoord.y - normalizedMousePosition.y, 2.0)
             );
             float modifier = 0.09;
-            if (distanceFromMouse + rand(vec2(u_time, u_time)) * .005  < rand(vec2(distanceFromMouse, u_time)) * .02 + rand(vec2(distanceFromMouse, u_time)) * .07) {
-                modifier += rand(vec2(distanceFromMouse, u_time)) * .9;
+            if (distanceFromMouse + rand(vec2(u_time, u_time)) * .005  < rand(vec2(distanceFromMouse, u_time)) * .01 + rand(vec2(distanceFromMouse, u_time)) * .07) {
+                modifier += rand(vec2(distanceFromMouse, u_time)) * .5;
             }
 
             if (fract(u_time) * rand(vec2(u_time))  < .01) {
