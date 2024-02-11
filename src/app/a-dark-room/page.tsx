@@ -1,6 +1,20 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useBackgroundContext } from '../../components/BackgroundCanvas';
+import Experiment4 from '../../components/Experiment4';
+
 export default function ADarkRoom() {
+    const { reset, setBackground } = useBackgroundContext();
+
+    useEffect(() => {
+        setBackground(<Experiment4 />);
+
+        return () => {
+            reset();
+        };
+    }, []);
+
     return (
         <section>
             <h1 className="hidden">A Dark Room</h1>
