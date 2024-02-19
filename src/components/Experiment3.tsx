@@ -1,18 +1,21 @@
 import { useEffect, useRef } from 'react';
 
 export default function Experiment3() {
-    const vertexShaderSource = `
-        precision mediump float;
-        attribute vec2 vertPosition;
+    const vertexShaderSource = `#version 300 es
+        in vec2 vertPosition;
+        in vec2 a_textCoord;
+        out vec2 v_textCoord;
 
         void main() {
             gl_Position = vec4(vertPosition, 0.0, 1.0);
+            v_textCoord = a_textCoord;
         }`;
-    const fragmentShaderSource = `
+    const fragmentShaderSource = `#version 300 es
         precision mediump float;
-        uniform vec2 u_resolution;
-        uniform vec2 u_mousePosition;
+        in vec2 v_textCoord;
         uniform float u_time;
+        uniform sampler2D u_texture;
+        out vec4 glFragColor;
 
         // https://thebookofshaders.com/10/
         float rand(vec2 co){
@@ -32,19 +35,20 @@ export default function Experiment3() {
         }
 
         void main() {
-            gl_FragColor = vec4(
-                noise2d(gl_FragCoord.xy + sin(u_time * 10000.) + 10000.128) * clamp(0.05, 0.1, noise(abs(sin(u_time)))),
-                noise2d(gl_FragCoord.xy + sin(u_time * 10000.) + 10000.128),
-                noise2d(gl_FragCoord.xy + sin(u_time * 10000.) + 10000.128),
-                clamp(0.2, 0.3, noise2d(gl_FragCoord.xy / 2.0 * u_time / 100.) * noise(.3 * u_time))
-            );
+            float frequency = sin(u_time / 3.0) + (sin(u_time / 2.0) * 0.5) + (sin(u_time) * 0.25);
+            float time_break = frequency > 0.1 ? frequency : 0.0;
+            float xNoise = v_textCoord.x
+                + clamp((rand(v_textCoord.xx + sin(u_time * 0.5) ) * 0.1 - 0.05) * time_break, -0.05, 0.05);
+            float yNoise = v_textCoord.y 
+                + clamp(noise(v_textCoord.y * 100.0 + u_time * 2.) * .01 - 0.005, -0.005, 0.005);
+
+            glFragColor = vec4(texture(u_texture, vec2(xNoise, yNoise)).rgb, 0.3);
         }`;
 
     const startTimeRef = useRef(Date.now());
     const lastUpdateRef = useRef(startTimeRef.current);
     const prefersReducedMotionRef = useRef(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const mouseRef = useRef<MouseEvent>();
 
     useEffect(() => {
         if (!canvasRef.current) {
@@ -59,22 +63,6 @@ export default function Experiment3() {
         // setup gl
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-        function setDimensions() {
-            if (!canvasRef.current || !gl) {
-                return;
-            }
-
-            canvasRef.current.width = canvasRef.current.clientWidth;
-            canvasRef.current.height = canvasRef.current.clientHeight;
-            gl!.viewport(
-                0,
-                0,
-                canvasRef.current!.clientWidth!,
-                canvasRef.current!.clientHeight!
-            );
-        }
-        setDimensions();
 
         // program
         const program = gl.createProgram();
@@ -115,9 +103,18 @@ export default function Experiment3() {
         }
         gl.useProgram(program);
 
+        // calculate proper ratio for setting code-x image
+        const getAspectRatioModifier = () => {
+            const imageAspectRatio = 0.7;
+            const targetWidth = window.innerHeight * imageAspectRatio;
+            const normalizedWidth = targetWidth / window.innerWidth;
+            return normalizedWidth * 2;
+        };
+        const minX = 0 - getAspectRatioModifier();
+        const maxX = 0 + getAspectRatioModifier();
         const triangleVertices = [
             // x, y
-            -1.0, 1.0, -1.0, -1.0, 1, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
+            minX, 1.0, minX, -1.0, maxX, -1.0, minX, 1.0, maxX, -1.0, maxX, 1.0,
         ];
         const triangleVertexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexBuffer);
@@ -140,29 +137,70 @@ export default function Experiment3() {
         );
         gl.enableVertexAttribArray(vertPositionAttributeLocation);
 
-        const resolutionUniformLocation = gl.getUniformLocation(
+        const textCoordAttributeLocation = gl.getAttribLocation(
             program,
-            'u_resolution'
+            'a_textCoord'
         );
-        gl.uniform2fv(resolutionUniformLocation, [
-            gl.canvas.width,
-            gl.canvas.height,
-        ]);
+        const textCoordBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, textCoordBuffer);
+        gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array([0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0]),
+            gl.STATIC_DRAW
+        );
 
+        // load imge
+        // Create a texture.
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+
+        // Fill the texture with a 1x1 blue pixel.
+        gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            1,
+            1,
+            0,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            new Uint8Array([0, 0, 0, 255])
+        );
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+        // Asynchronously load an image
+        var image = new Image();
+        image.src = '/code-x.png';
+        image.addEventListener('load', () => {
+            // Now that the image has loaded make copy it to the texture.
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(
+                gl.TEXTURE_2D,
+                0,
+                gl.RGBA,
+                gl.RGBA,
+                gl.UNSIGNED_BYTE,
+                image
+            );
+            gl.generateMipmap(gl.TEXTURE_2D);
+        });
+        gl.vertexAttribPointer(
+            textCoordAttributeLocation,
+            2,
+            gl.FLOAT,
+            true,
+            0,
+            0
+        );
+        gl.enableVertexAttribArray(textCoordAttributeLocation);
+
+        // uniforms
         const timeUniformLocation = gl.getUniformLocation(program, 'u_time');
-        gl.uniform1f(
-            timeUniformLocation,
-            (Date.now() - startTimeRef.current) / 1000
-        );
-
-        const mouseUniformLocation = gl.getUniformLocation(
-            program,
-            'u_mousePosition'
-        );
-        gl.uniform2fv(mouseUniformLocation, [
-            mouseRef.current?.x ?? 0.0,
-            window.innerHeight - (mouseRef.current?.y ?? 0.0),
-        ]);
+        gl.uniform1f(timeUniformLocation, 0);
 
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -180,10 +218,6 @@ export default function Experiment3() {
                     timeUniformLocation,
                     (now - startTimeRef.current) / 1000
                 );
-                gl.uniform2fv(mouseUniformLocation, [
-                    mouseRef.current?.x ?? 0.0,
-                    window.innerHeight - (mouseRef.current?.y ?? 0.0),
-                ]);
 
                 gl.clearColor(0, 0, 0, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
@@ -202,21 +236,66 @@ export default function Experiment3() {
             prefersReducedMotionRef.current = mediaQuery.matches;
         }
 
-        function onMouseMove(event: MouseEvent) {
-            mouseRef.current = event;
-        }
-
         const mediaQuery = window.matchMedia(
             '(prefers-reduced-motion: reduce)'
         );
+
         prefersReducedMotionRef.current = mediaQuery.matches;
         mediaQuery.addEventListener('change', onMediaQueryChange);
-        window.addEventListener('mousemove', onMouseMove);
+
+        function setDimensions() {
+            if (!canvasRef.current || !gl || !program) {
+                return;
+            }
+
+            canvasRef.current.width = canvasRef.current.clientWidth;
+            canvasRef.current.height = canvasRef.current.clientHeight;
+            gl!.viewport(
+                0,
+                0,
+                canvasRef.current!.clientWidth!,
+                canvasRef.current!.clientHeight!
+            );
+            // calculate proper ratio for setting code-x image
+            const minX = 0 - getAspectRatioModifier() * 0.5;
+            const maxX = 0 + getAspectRatioModifier() * 0.5;
+            const triangleVertices = [
+                // x, y
+                minX,
+                1.0,
+                minX,
+                -1.0,
+                maxX,
+                -1.0,
+                minX,
+                1.0,
+                maxX,
+                -1.0,
+                maxX,
+                1.0,
+            ];
+            gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexBuffer);
+            gl.bufferData(
+                gl.ARRAY_BUFFER,
+                new Float32Array(triangleVertices),
+                gl.STATIC_DRAW
+            );
+            gl.vertexAttribPointer(
+                vertPositionAttributeLocation,
+                2,
+                gl.FLOAT,
+                false,
+                0,
+                0
+            );
+            gl.enableVertexAttribArray(vertPositionAttributeLocation);
+        }
+        setDimensions();
+
         window.addEventListener('resize', setDimensions);
 
         return () => {
             gl.deleteProgram(program);
-            window.removeEventListener('mousemove', onMouseMove);
             window.removeEventListener('resize', setDimensions);
             mediaQuery.removeEventListener('change', onMediaQueryChange);
             cancelAnimationFrame(frame);
