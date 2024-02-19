@@ -38,18 +38,17 @@ export default function Experiment3() {
             float frequency = sin(u_time / 3.0) + (sin(u_time / 2.0) * 0.5) + (sin(u_time) * 0.25);
             float time_break = frequency > 0.1 ? frequency : 0.0;
             float xNoise = v_textCoord.x
-                + clamp((rand(v_textCoord.xx) * 0.4 - 0.2) * time_break, -0.20, 0.20);
+                + clamp((rand(v_textCoord.xx + sin(u_time * 0.5) ) * 0.1 - 0.05) * time_break, -0.05, 0.05);
             float yNoise = v_textCoord.y 
-                + clamp(noise2d(v_textCoord.yy * 100.0 + u_time * 2.) * .01 - 0.005, -0.005, 0.005);
+                + clamp(noise(v_textCoord.y * 100.0 + u_time * 2.) * .01 - 0.005, -0.005, 0.005);
 
-            glFragColor = vec4(texture(u_texture, vec2(xNoise, yNoise)).rgb, 0.5);
+            glFragColor = vec4(texture(u_texture, vec2(xNoise, yNoise)).rgb, 0.3);
         }`;
 
     const startTimeRef = useRef(Date.now());
     const lastUpdateRef = useRef(startTimeRef.current);
     const prefersReducedMotionRef = useRef(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const mouseRef = useRef<MouseEvent>();
 
     useEffect(() => {
         if (!canvasRef.current) {
@@ -64,22 +63,6 @@ export default function Experiment3() {
         // setup gl
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-        function setDimensions() {
-            if (!canvasRef.current || !gl) {
-                return;
-            }
-
-            canvasRef.current.width = canvasRef.current.clientWidth;
-            canvasRef.current.height = canvasRef.current.clientHeight;
-            gl!.viewport(
-                0,
-                0,
-                canvasRef.current!.clientWidth!,
-                canvasRef.current!.clientHeight!
-            );
-        }
-        setDimensions();
 
         // program
         const program = gl.createProgram();
@@ -120,9 +103,18 @@ export default function Experiment3() {
         }
         gl.useProgram(program);
 
+        // calculate proper ratio for setting code-x image
+        const getAspectRatioModifier = () => {
+            const imageAspectRatio = 0.7;
+            const targetWidth = window.innerHeight * imageAspectRatio;
+            const normalizedWidth = targetWidth / window.innerWidth;
+            return normalizedWidth * 2;
+        };
+        const minX = 0 - getAspectRatioModifier();
+        const maxX = 0 + getAspectRatioModifier();
         const triangleVertices = [
             // x, y
-            -1.0, 1.0, -1.0, -1.0, 1, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
+            minX, 1.0, minX, -1.0, maxX, -1.0, minX, 1.0, maxX, -1.0, maxX, 1.0,
         ];
         const triangleVertexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexBuffer);
@@ -208,10 +200,7 @@ export default function Experiment3() {
 
         // uniforms
         const timeUniformLocation = gl.getUniformLocation(program, 'u_time');
-        gl.uniform1f(
-            timeUniformLocation,
-            (Date.now() - startTimeRef.current) / 1000
-        );
+        gl.uniform1f(timeUniformLocation, 0);
 
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -253,6 +242,56 @@ export default function Experiment3() {
 
         prefersReducedMotionRef.current = mediaQuery.matches;
         mediaQuery.addEventListener('change', onMediaQueryChange);
+
+        function setDimensions() {
+            if (!canvasRef.current || !gl || !program) {
+                return;
+            }
+
+            canvasRef.current.width = canvasRef.current.clientWidth;
+            canvasRef.current.height = canvasRef.current.clientHeight;
+            gl!.viewport(
+                0,
+                0,
+                canvasRef.current!.clientWidth!,
+                canvasRef.current!.clientHeight!
+            );
+            // calculate proper ratio for setting code-x image
+            const minX = 0 - getAspectRatioModifier() * 0.5;
+            const maxX = 0 + getAspectRatioModifier() * 0.5;
+            const triangleVertices = [
+                // x, y
+                minX,
+                1.0,
+                minX,
+                -1.0,
+                maxX,
+                -1.0,
+                minX,
+                1.0,
+                maxX,
+                -1.0,
+                maxX,
+                1.0,
+            ];
+            gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexBuffer);
+            gl.bufferData(
+                gl.ARRAY_BUFFER,
+                new Float32Array(triangleVertices),
+                gl.STATIC_DRAW
+            );
+            gl.vertexAttribPointer(
+                vertPositionAttributeLocation,
+                2,
+                gl.FLOAT,
+                false,
+                0,
+                0
+            );
+            gl.enableVertexAttribArray(vertPositionAttributeLocation);
+        }
+        setDimensions();
+
         window.addEventListener('resize', setDimensions);
 
         return () => {
