@@ -35,8 +35,8 @@ export default function Experiment3() {
         }
 
         void main() {
-            float frequency = sin(u_time / 3.0) + (sin(u_time / 2.0) * 0.5) + (sin(u_time) * 0.25);
-            float time_break = frequency > 0.1 ? frequency : 0.0;
+            float frequency = 0.05 * (sin(u_time / 3.0) + (sin(u_time / 2.0) * 0.5) + (sin(u_time) * 0.25));
+            float time_break = frequency > 0.05 ? frequency : 0.0;
             float xNoise = v_textCoord.x
                 + clamp((rand(v_textCoord.xx + sin(u_time * 0.5) ) * 0.1 - 0.05) * time_break, -0.05, 0.05);
             float yNoise = v_textCoord.y 
