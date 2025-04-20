@@ -37,7 +37,7 @@ export default function Experiment4() {
     const lastUpdateRef = useRef(startTimeRef.current);
     const prefersReducedMotionRef = useRef(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const mouseRef = useRef<MouseEvent>();
+    const mouseRef = useRef<MouseEvent>(undefined);
 
     useEffect(() => {
         if (!canvasRef.current) {
