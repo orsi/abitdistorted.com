@@ -15,17 +15,8 @@ body {
 
 body {
   background: black;
-  color: white;
-  font-family: ui-monospace,
-    Menlo, Monaco,
-    "Cascadia Mono", "Segoe UI Mono",
-    "Roboto Mono",
-    "Oxygen Mono",
-    "Ubuntu Monospace",
-    "Source Code Pro",
-    "Fira Mono",
-    "Droid Sans Mono",
-    "Courier New", monospace;
+  color: snow;
+  font-family: monospace;
   font-size: 16px;
   font-weight: 500;
 }
@@ -39,7 +30,7 @@ small {
 }
 
 a {
-  color: snow;
+  color: burlywood;
 }
 
 a:hover,
