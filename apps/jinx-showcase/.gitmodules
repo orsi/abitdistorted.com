@@ -1,3 +1,0 @@
-[submodule "vendor/jinx"]
-	path = vendor/jinx
-	url = git@github.com:orsi/jinx.git

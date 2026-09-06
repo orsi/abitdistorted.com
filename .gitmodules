@@ -1,0 +1,3 @@
+[submodule "apps/jinx-showcase/vendor/jinx"]
+	path = apps/jinx-showcase/vendor/jinx
+	url = https://github.com/orsi/jinx.git
